@@ -6,7 +6,7 @@ This code offers a autonomously method to detect solar prominences from solar im
 
 ## Prerequisites for Running Program
 
-Python 3
+Python 3  
 Pyqt 5 or higher  
 Astropy  
 OpenCV  4 or higher  
@@ -19,7 +19,9 @@ Simply run the program without any parameters. Afterwards, the UI will load in. 
 
 ### Batch Running through Multiple Files
 
-
+```
+python abc.py
+```
 
 ## Authors
 Ian Kim  
