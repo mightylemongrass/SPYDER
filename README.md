@@ -16,17 +16,17 @@ OpenCV  4 or higher
 ### Using the UI
 
 ```
-python main-v4.py
+python main.py
 ```
 
-Simply run the program without any parameters. Afterwards, the UI will load in. To select an images to run through the program, either click the "Open Fits Folder" button and choose the directory containing the fits files of the solar images or enter the repository into the search bar and click enter. (IMAGES MUST BE FITS FILES) This should cause the bar on the right to be filled in with all fits files contained within the directory. To select an image, simply select on the name of the file and click "select file". The image should then appear on the screen. 
+Simply run the program without any parameters. Afterwards, the UI will load in automatically. To select an image to run through the program, either click the "Open Fits Folder" button and choose the directory containing the fits files of the solar images or enter the repository into the search bar and click enter. (IMAGES MUST BE FITS FILES) This should cause the bar on the right to be filled in with all fits files contained within the directory. To select an image, simply select on the name of the file and click "select file". The image should then appear on the screen. From here, you may press the detect prominences button to run the algorithm through the image. (may process instantaneously to around a minute depending on the speed of your computer) The prominences should appear on the image, and the table should be filled with the coordinates of their bounding boxes. At this point, optionally, you may adjust the confidence slider and the other image options to your liking. Afterwards, you may select a row and click delete if you wish to delete a bounding box, and then click Save as Csv in order to save the bounding boxes in a csv file. 
 
 ### Batch Running through Multiple Files
 
 If the following command is run, then the UI will not be used and the algorithm will be run through all fits files within a selected folder. 
 
 ```
-python main-v4.py --cmd-mode True --yaml-path "/a.yaml"
+python main.py --cmd-mode True --yaml-path "/a.yaml"
 ```
 The yaml path will contain the following parameters and must be in this format (example yaml file is in the repo):  
 
@@ -40,7 +40,7 @@ The bounding box data will be in this format:
 An alternative way to run the program can be done using the following command: 
 
 ```
-python main-v4.py --cmd-mode True --yaml-path /a.yaml --input-path /inputfolder --output-path /outputfolder"
+python main.py --cmd-mode True --yaml-path /a.yaml --input-path /inputfolder --output-path /outputfolder"
 ```
 
 This essentially executes the same code as shown above, except overriding the input and output paths shown in the yaml. 
