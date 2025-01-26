@@ -46,7 +46,7 @@ python main.py --cmd-mode True --yaml-path /a.yaml --input-path /inputfolder --o
 This essentially executes the same code as shown above, except overriding the input and output paths shown in the yaml. 
 
 ## Authors
-Ian Kim  
+Ian Kim  ik9davis@gmail.com
 Vasyl Yurchyshyn  
 
 ## Version
