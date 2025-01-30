@@ -52,7 +52,7 @@ The bounding box data will be in this format:
 An alternative way to run the program can be done using the following command: 
 
 ```
-python main.py --cmd-mode True --yaml-path /a.yaml --input-path /inputfolder --output-path /outputfolder"
+python main.py --cmd-mode --yaml-path a.yaml --input-path /inputfolder --output-path /outputfolder"
 ```
 
 This essentially executes the same code as shown above, except overriding the input and output paths shown in the yaml. 
