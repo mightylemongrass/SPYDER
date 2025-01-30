@@ -57,6 +57,11 @@ python main.py --cmd-mode --yaml-path a.yaml --input-path /inputfolder --output-
 
 This essentially executes the same code as shown above, except overriding the input and output paths shown in the yaml. 
 
+## Checkpoint file  
+
+The checkpoint file can be downloaded at this site:  
+https://drive.google.com/drive/folders/1wCbNUMoNF6BgzvsFxPiHMqucphtQI7Gt?q=sharedwith:public%20parent:1wCbNUMoNF6BgzvsFxPiHMqucphtQI7Gt  
+
 ## Authors
 Ian Kim  ik9davis@gmail.com  
 Vasyl Yurchyshyn  
