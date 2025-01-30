@@ -32,7 +32,17 @@ The yaml path will contain the following parameters and must be in this format (
 
 <img width="355" alt="Screenshot 2024-12-30 at 3 44 06 PM" src="https://github.com/user-attachments/assets/2f8a532d-be1f-4f4b-9427-e6d38be9d3ac" />
 
-This yaml file will cause the program to process every fits file located in the input folder and store the bounding box data as well as the images (if save_images is set to True) in the output folder.   
+This yaml file will cause the program to process every fits file located in the input folder and store the bounding box data as well as the images (if save_images is set to True) in the output folder.  
+Here are the various parameters present in the yaml file explained:  
+device: The device used for the AI model (either cpu or number corresponding to gpu)  
+yolo_conf_threshold: confidence threshold for boxes  
+overlap_threshold: overlap threshold for boxes  
+file_path_of_data: input file path for folder containing fits files  
+output_folder_location: where the images as well as csv file will be saved  
+yolo_dir: checkpoint file location for yolo algorithm  
+save_images: whether or not to save images  
+better_optimization: saves time with better optimization if set to True  
+
 The bounding box data will be in this format:
 
 <img width="680" alt="Screenshot 2024-12-30 at 3 49 45 PM" src="https://github.com/user-attachments/assets/8f4c942f-bfc5-405d-be4c-90bc2eb87149" />
@@ -46,7 +56,7 @@ python main.py --cmd-mode True --yaml-path /a.yaml --input-path /inputfolder --o
 This essentially executes the same code as shown above, except overriding the input and output paths shown in the yaml. 
 
 ## Authors
-Ian Kim  ik9davis@gmail.com
+Ian Kim  ik9davis@gmail.com  
 Vasyl Yurchyshyn  
 
 ## Version
