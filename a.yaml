@@ -1,0 +1,12 @@
+device: cpu
+yolo_conf_threshold: 0.05
+overlap_threshold: 0.45
+file_path_of_data: /Users/iankim/Documents/Programming/SPYDER/solar_fits_tests
+output_folder_location: /Users/iankim/Documents/Programming/SPYDER/Testing images
+yolo_dir: /Users/iankim/Documents/Programming/SPYDER/weightsv3/best_ckpt.pt
+save_images: True
+better_optimization: True
+
+
+
+
