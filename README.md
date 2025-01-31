@@ -65,7 +65,7 @@ Then, download the checkpoint file.
 The checkpoint file can be downloaded at this site:  
 https://drive.google.com/drive/folders/1wCbNUMoNF6BgzvsFxPiHMqucphtQI7Gt?q=sharedwith:public%20parent:1wCbNUMoNF6BgzvsFxPiHMqucphtQI7Gt  
 
-If using the UI, change the filepath in ui.py to the filepath of the actual weights  
+If using the UI, modify the weights variable as shown below. 
   
 <img width="919" alt="Screenshot 2025-01-30 at 8 42 03 PM" src="https://github.com/user-attachments/assets/619fe56f-e843-4d11-a2cd-0b31ddb1aa99" />
 
