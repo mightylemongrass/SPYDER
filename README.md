@@ -30,7 +30,7 @@ python main.py --cmd-mode True --yaml-path "/a.yaml"
 ```
 The yaml path will contain the following parameters and must be in this format (example yaml file is in the repo):  
 
-<img width="612" alt="Screenshot 2025-01-29 at 11 56 37 PM" src="https://github.com/user-attachments/assets/0e916c70-e943-4467-9d7f-089604de207a" />  
+<img width="711" alt="Screenshot 2025-01-30 at 8 44 58 PM" src="https://github.com/user-attachments/assets/2a861d49-0fe7-4110-adaa-6389b1d42ce1" />
 
 This yaml file will cause the program to process every fits file located in the input folder and store the bounding box data as well as the images (if save_images is set to True) in the output folder.  
 Here are the various parameters present in the yaml file explained:  
@@ -57,10 +57,19 @@ python main.py --cmd-mode --yaml-path a.yaml --input-path /inputfolder --output-
 
 This essentially executes the same code as shown above, except overriding the input and output paths shown in the yaml. 
 
-## Checkpoint file  
+## Steps for Installation  
+  
+First, download all files in the repository and save them in a single folder.  
+Then, download the checkpoint file. 
 
 The checkpoint file can be downloaded at this site:  
 https://drive.google.com/drive/folders/1wCbNUMoNF6BgzvsFxPiHMqucphtQI7Gt?q=sharedwith:public%20parent:1wCbNUMoNF6BgzvsFxPiHMqucphtQI7Gt  
+
+If using the UI, change the filepath in ui.py to the filepath of the actual weights  
+  
+<img width="919" alt="Screenshot 2025-01-30 at 8 42 03 PM" src="https://github.com/user-attachments/assets/619fe56f-e843-4d11-a2cd-0b31ddb1aa99" />
+
+If batch running, simply modify the values in the yaml file. (shown above)  
 
 ## Authors
 Ian Kim  ik9davis@gmail.com  
