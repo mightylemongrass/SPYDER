@@ -10,13 +10,11 @@
 #################################################################################################
 
 
-
-
 from ui import *
 import argparse
 import yaml
 
-def multifile(filepath, device, output_file_loc, yolo_dir, middle_option, conf_threshold=0.05, iou_threshold=0.45, save_images=False):
+def multifile(filepath, device, output_file_loc, yolo_dir, middle_option, conf_threshold=25, iou_threshold=0.45, save_images=False):
     '''
     code for batch running algorithm through a folder of fits files
     Utilizes functions from utils.py, as well as the algorithm itself
@@ -57,8 +55,8 @@ def multifile(filepath, device, output_file_loc, yolo_dir, middle_option, conf_t
             sun_image = cv2.cvtColor(sun_image, cv2.COLOR_RGB2BGR)
             sun_image2 = cv2.convertScaleAbs(normal_image, alpha=0.9, beta=-10)
             color_image = cv2.cvtColor(cv2.applyColorMap(sun_image2, cv2.COLORMAP_HOT), cv2.COLOR_RGB2BGR)
-            boxes = inferer.inferv2(sun_image, conf_threshold, iou_threshold,\
-                                                None, False, 1000, 0.25, 90, usemiddle=middle_option)
+            boxes = inferer.inferv2(sun_image, 0.05, iou_threshold,\
+                                                None, False, 1000, conf_threshold*0.01, 90, usemiddle=middle_option)
             polar_coords = []
 
             if save_images:
@@ -125,7 +123,7 @@ def yaml_startup(yaml_filepath, input_file=None, output_file=None):
 args = args_parser().parse_args()
 
 
-print(args)
+#print(args)
 
 if not args.cmd_mode: # Create the application and the main window
     app = QApplication(sys.argv)
