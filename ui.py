@@ -187,11 +187,7 @@ class MainApp(QMainWindow):
         self.show_circle_center = True
         self.show_boxes = True
 
-        # weights are the checkpoint files for the yolo models
-        # weightsv1: many bugs, trained off of wrong polar coordinates, doesn't work (300 epochs)
-        # weightsv2: fixed bugs (300 epochs)
-        # weightsv3: data was manually annotated, but  training data size was reduced from ~5000 to ~600 (100 epochs)
-        # weightsv4: same as weightsv3 but trained for 300 epochs instead of 100 (300 epochs)
+        # You must replace the filepath below with the actual filepath of the checkpoint file on your computer
 
         weights = "/Users/iankim/Documents/Programming/SPYDER/weightsv3/best_ckpt.pt"
         img_size = 640
