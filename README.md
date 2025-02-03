@@ -73,7 +73,7 @@ If batch running, simply modify the values in the yaml file. (shown above)
 
 ## Authors
 Ian Kim  ik9davis@gmail.com  
-Vasyl Yurchyshyn  
+Vasyl Yurchyshyn  vasyl.yurchyshyn@njit.edu  
 
 ## Version
 
