@@ -1,6 +1,6 @@
 # Solar Prominence Yolo DEtectoR (SPYDER)
 
-This code offers a autonomously method to detect solar prominences from solar images through machine learning and computer vision techniques, specifically the Yolov6 algorithm. The program outputs the coordinates of the prominences written in polar coordinates into a csv file. It is capable of batch-running through parameters inputed from a .yaml file, as well as running through individual files via a UI. The code was written in python, with the PYQT library used to create the user interface. 
+SPYDER is a deep-learning artificial intelligence algorithm that offers an autonomous method to detect solar prominences from solar images through machine learning and computer vision techniques, specifically the Yolov6 algorithm. The program outputs the coordinates of the prominences written in polar coordinates into a csv file. It is capable of batch-running through parameters inputed from a .yaml file, as well as running through individual files via a UI. The code was written in python, with the PYQT library used to create the user interface. 
 
 ![image](https://github.com/user-attachments/assets/76ef54cb-a821-4d98-a8ac-60fea6f14996)
 
