@@ -52,10 +52,17 @@ The bounding box data will be in this format:
 An alternative way to run the program can be done using the following command: 
 
 ```
-python main.py --cmd-mode --yaml-path a.yaml --input-path /inputfolder --output-path /outputfolder"
+python main.py --cmd-mode --yaml-path a.yaml --input-path /inputfolder --output-path /outputfolder
 ```
 
-This essentially executes the same code as shown above, except overriding the input and output paths shown in the yaml. 
+This essentially executes the same code as shown above, except overriding the input and output paths shown in the yaml for quick changes.  
+
+If using a year/month/day folder system, you can use the following command:  
+
+```  
+python main.py --cmd-mode --yaml-path a.yaml --input-path /inputfolder --output-path /outputfolder --start-date 5/17/2024 --end-date 6/4/202  
+```  
+NOTE: This is only suitable when using the folder format of year/month/day/a.fits, where the program will through all files from the start to end dates.   
 
 ## Steps for Installation  
   
