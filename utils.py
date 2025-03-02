@@ -96,9 +96,6 @@ def radian(degree):
     '''
     return (degree/180)*math.pi
 
-<<<<<<< HEAD
-=======
-
 def get_stat(img):
     '''
     finds average darkest and brightest spots by examining the four corners and center of the image
@@ -111,7 +108,7 @@ def get_stat(img):
     bright = np.mean(img[img.shape[0]//2-50:img.shape[0]//2+50, img.shape[1]//2-50:img.shape[1]//2+50])
     return dark, bright
 
->>>>>>> master
+
 def draw_ellipse(degree1, degree2, sun_radius, sun_cx, sun_cy, height, duplicate, color=False):
     
     '''
@@ -201,8 +198,5 @@ def save_files(saved_bboxes, filepath):
     saves bboxes in csv file
     '''
     my_df = pd.DataFrame(saved_bboxes, columns=['Image', 'Left Edge', 'Right Edge', 'Height', 'Confidence', "Area", "CenterX", "CenterY", "Radius"])
-<<<<<<< HEAD
     my_df.to_csv(filepath, index=False)
-=======
-    my_df.to_csv(filepath, index=False)
->>>>>>> master
+

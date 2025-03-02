@@ -472,7 +472,9 @@ class MainApp(QMainWindow):
                 # 2. * 255, to RGB
                 self.normal_image = to_rgb(img)
 
-                self.sun_image = cv2.convertScaleAbs(to_rgb(img), alpha=3, beta=50)
+                dark, bright = get_stat(img)
+                self.sun_image = np.clip(img-dark, 0, 1)
+                self.sun_image = cv2.convertScaleAbs(to_rgb(self.sun_image), alpha=3, beta=50)
 
                 sun_image_extra = (img*255).astype(np.uint8)
                 sun_image_extra = cv2.medianBlur(sun_image_extra,5)
@@ -552,8 +554,4 @@ class MainApp(QMainWindow):
             return
 
     def on_view_mode(self, mode):
-<<<<<<< HEAD
         print("hello")
-=======
-        print("hello")
->>>>>>> master
