@@ -1,9 +1,18 @@
+<<<<<<< HEAD
 device: cpu
 yolo_conf_threshold: 0.05
 overlap_threshold: 0.45
 file_path_of_data: /Users/iankim/Documents/Programming/SPYDER/solar_fits_tests
 output_folder_location: /Users/iankim/Documents/Programming/SPYDER/Testing images
 yolo_dir: /Users/iankim/Documents/Programming/SPYDER/weightsv3/best_ckpt.pt
+=======
+device: 0
+yolo_conf_threshold: 25
+overlap_threshold: 0.45
+file_path_of_data: C:\\Users\\ianki\\Downloads\\fdha-jun04\\ja3
+output_folder_location: C:\\Users\\ianki\\Downloads\\SPYDER_date_tester2
+yolo_dir: "C:\\Users\\ianki\\Documents\\2023-2024_coding\\AI_studies\\solar_prominence_final\\weightsv4\\best_ckpt.pt"
+>>>>>>> master
 save_images: True
 better_optimization: True
 

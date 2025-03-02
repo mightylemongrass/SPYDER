@@ -552,4 +552,8 @@ class MainApp(QMainWindow):
             return
 
     def on_view_mode(self, mode):
+<<<<<<< HEAD
         print("hello")
+=======
+        print("hello")
+>>>>>>> master
