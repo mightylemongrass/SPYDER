@@ -47,7 +47,7 @@ better_optimization: saves time with better optimization if set to True
   
 The bounding box data will be in this format:
 
-<img width="680" alt="Screenshot 2024-12-30 at 3 49 45 PM" src="https://github.com/user-attachments/assets/8f4c942f-bfc5-405d-be4c-90bc2eb87149" />
+<img width="542" alt="Screenshot 2025-03-02 151536" src="https://github.com/user-attachments/assets/51ece66f-5112-492b-afdf-411e7cea57ea" />  
 
 An alternative way to run the program can be done using the following command: 
 
@@ -62,7 +62,7 @@ If using a year/month/day folder system, you can use the following command:
 ```  
 python main.py --cmd-mode --yaml-path a.yaml --input-path /inputfolder --output-path /outputfolder --start-date 5/17/2024 --end-date 6/4/202  
 ```  
-NOTE: This is only suitable when using the folder format of year/month/day/a.fits, where the program will through all files from the start to end dates.   
+NOTE: This is only suitable when using the folder format of year/month/day/filename.fits, where the program will through all files from the start to end dates.   
 
 ## Steps for Installation  
   
