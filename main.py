@@ -97,7 +97,7 @@ def multifile(filepath, device, output_file_loc, yolo_dir, middle_option, conf_t
             sun_image = np.clip(img-dark, 0, 1)
             sun_image = cv2.convertScaleAbs(to_rgb(sun_image), alpha=3, beta=50)
 
-            sun_image_extra = (img*255).astype(np.uint8)
+            sun_image_extra = cv2.cvtColor(sun_image, cv2.COLOR_BGR2GRAY)
             sun_image_extra = cv2.medianBlur(sun_image_extra,5)
             circles = cv2.HoughCircles(sun_image_extra, cv2.HOUGH_GRADIENT,2,1200)
             circle = circles[0,0,:]
@@ -108,7 +108,7 @@ def multifile(filepath, device, output_file_loc, yolo_dir, middle_option, conf_t
             normal_image = cv2.cvtColor(normal_image, cv2.COLOR_RGB2BGR)
             sun_image = cv2.cvtColor(sun_image, cv2.COLOR_RGB2BGR)
             sun_image2 = cv2.convertScaleAbs(normal_image, alpha=0.9, beta=-10)
-            color_image = cv2.cvtColor(cv2.applyColorMap(sun_image2, cv2.COLORMAP_HOT), cv2.COLOR_RGB2BGR)
+            #color_image = cv2.cvtColor(cv2.applyColorMap(sun_image2, cv2.COLORMAP_HOT), cv2.COLOR_RGB2BGR)
             boxes = inferer.inferv2(sun_image, 0.05, iou_threshold,\
                                                 None, False, 1000, conf_threshold*0.01, 90, usemiddle=middle_option)
             polar_coords = []

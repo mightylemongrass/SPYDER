@@ -476,7 +476,7 @@ class MainApp(QMainWindow):
                 self.sun_image = np.clip(img-dark, 0, 1)
                 self.sun_image = cv2.convertScaleAbs(to_rgb(self.sun_image), alpha=3, beta=50)
 
-                sun_image_extra = (img*255).astype(np.uint8)
+                sun_image_extra = cv2.cvtColor(self.sun_image, cv2.COLOR_BGR2GRAY)
                 sun_image_extra = cv2.medianBlur(sun_image_extra,5)
                 circles = cv2.HoughCircles(sun_image_extra, cv2.HOUGH_GRADIENT,2,1200)
                 circle = circles[0,0,:]
