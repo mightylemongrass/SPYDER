@@ -1,0 +1,8 @@
+opencv-python
+PyQt5
+astropy
+torch
+torchvision
+torchaudio
+pandas
+numpy<2
