@@ -30,7 +30,7 @@ class MainImage(QWidget):
         '''
         super(MainImage, self).__init__()
         self.main_app = main_app
-        self.image_pixmap = QPixmap(1440, 1440)
+        self.image_pixmap = QPixmap(640, 640)
         self.image_pixmap.fill(Qt.white)
         self.image_scale = 1.0
         self.setMinimumSize(500, 400)
@@ -78,7 +78,7 @@ class MainImage(QWidget):
 
     def mouseReleaseEvent(self, mouse_event):
         pass
-
+        
 
 class MainTool(QWidget):
     '''
@@ -159,7 +159,7 @@ class MainTool(QWidget):
         self.setLayout(layout)
         self.show()
 
-
+            
 class MainApp(QMainWindow): 
     '''
     Entirety of the UI
@@ -485,9 +485,11 @@ class MainApp(QMainWindow):
                 # 2. * 255, to RGB
                 self.normal_image = to_rgb(img)
 
-                self.sun_image = cv2.convertScaleAbs(to_rgb(img), alpha=3, beta=50)
+                dark, bright = get_stat(img)
+                self.sun_image = np.clip(img-dark, 0, 1)
+                self.sun_image = cv2.convertScaleAbs(to_rgb(self.sun_image), alpha=3, beta=50)
 
-                sun_image_extra = (img*255).astype(np.uint8)
+                sun_image_extra = cv2.cvtColor(self.sun_image, cv2.COLOR_BGR2GRAY)
                 sun_image_extra = cv2.medianBlur(sun_image_extra,5)
                 circles = cv2.HoughCircles(sun_image_extra, cv2.HOUGH_GRADIENT,2,1200)
                 circle = circles[0,0,:]
