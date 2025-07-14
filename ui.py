@@ -30,7 +30,7 @@ class MainImage(QWidget):
         '''
         super(MainImage, self).__init__()
         self.main_app = main_app
-        self.image_pixmap = QPixmap(640, 640)
+        self.image_pixmap = QPixmap(1440, 1440)
         self.image_pixmap.fill(Qt.white)
         self.image_scale = 1.0
         self.setMinimumSize(500, 400)
@@ -78,7 +78,7 @@ class MainImage(QWidget):
 
     def mouseReleaseEvent(self, mouse_event):
         pass
-        
+
 
 class MainTool(QWidget):
     '''
@@ -159,7 +159,7 @@ class MainTool(QWidget):
         self.setLayout(layout)
         self.show()
 
-            
+
 class MainApp(QMainWindow): 
     '''
     Entirety of the UI
@@ -229,18 +229,14 @@ class MainApp(QMainWindow):
         self.widget1.setMaximumHeight(100)
 
         self.table = QTableWidget(self)
-        table_header = ['Image','Left Edge','Right Edge','Height','Confidence','Area']
-        a = self.frameGeometry().width()//4
+        self.table_header = ['Image','Left Edge','Right Edge','Height','Confidence','Area']
+        a = self.frameGeometry().width()//12
         self.table_col_width = [a, a, a, a, a, a]
         self.table_row_height = self.frameGeometry().height()//20
-        self.table.setColumnCount(len(table_header))
-        self.table.setRowCount(3)
+        self.table.setColumnCount(len(self.table_header))
         self.table.horizontalHeader().hide()
         self.table.verticalHeader().hide()
         self.table.setFont(QFont("arial", 9))
-        for col in range(len(table_header)):
-            self.table.setColumnWidth(col, self.table_col_width[col])
-            self.table.setItem(0, col, QTableWidgetItem(table_header[col]))
 
         self.save_button = QPushButton('Save Image and Boxes')
         self.save_button.clicked.connect(self.save_csv)
@@ -274,6 +270,7 @@ class MainApp(QMainWindow):
         layout.addWidget(self.widget2)
         mainwidget.setLayout(layout)
         self.setCentralWidget(mainwidget)
+        self.func_mappingSignal()
 
     def close_app(self):
         '''
@@ -301,21 +298,21 @@ class MainApp(QMainWindow):
         reloading image when checkboxes are clicked, different image preset is used, or confidence value is changed
         '''
         if self.displayed == True:
+            if self.use_regular == True:
+                duplicate = copy.deepcopy(self.normal_image)
+            if self.use_other == True:
+                duplicate = copy.deepcopy(self.sun_image)
+            if self.use_color == True:
+                duplicate = copy.deepcopy(self.color_image)
+            if self.show_circle_center == True:
+                cv2.circle(duplicate, (self.sun_cx, self.sun_cy), 7, (0, 0, 255), -1)
+                cv2.circle(duplicate, (self.sun_cx, self.sun_cy), self.sun_radius, (255, 0, 255), 2)
             if self.selected == True:
-                if self.use_regular == True:
-                    duplicate = copy.deepcopy(self.normal_image)
-                if self.use_other == True:
-                    duplicate = copy.deepcopy(self.sun_image)
-                if self.use_color == True:
-                    duplicate = copy.deepcopy(self.color_image)
-                if self.show_circle_center == True:
-                    cv2.circle(duplicate, (self.sun_cx, self.sun_cy), 7, (0, 0, 255), -1)
-                    cv2.circle(duplicate, (self.sun_cx, self.sun_cy), self.sun_radius, (255, 0, 255), 2)
                 if self.show_boxes == True:
                     self.draw_arcs(duplicate)
-                w, h = self.painter.set_image(numpy=True, numpy_img=duplicate)
                 if r:
                     return duplicate
+            w, h = self.painter.set_image(numpy=True, numpy_img=duplicate)
 
     def load_table(self):
         '''
@@ -326,7 +323,23 @@ class MainApp(QMainWindow):
         for row in range(len(self.saved_bboxes)):
             self.table.setRowHeight(row, self.table_row_height)
             for col in range(len(table_header)):
-                self.table.setItem(row+1, col, QTableWidgetItem(self.saved_bboxes[row][col]))
+                if col != 0:
+                    self.table.setItem(row+1, col, QTableWidgetItem(str(round(float(self.saved_bboxes[row][col]), 3))))
+                else:
+                    self.table.setItem(row+1, col, QTableWidgetItem(self.saved_bboxes[row][col]))
+
+    def func_mappingSignal(self):
+        '''
+        forwards table data to func_test function whenever table is clicked
+        '''
+        self.table.clicked.connect(self.func_test)
+
+    def func_test(self, item):
+        '''
+        updates self.selected_box variable to the box being currently selected by the user
+        '''
+        self.selected_box = item.row()-1
+        self.redraw()
 
     def draw_rect(self, duplicate):
         '''
@@ -369,11 +382,14 @@ class MainApp(QMainWindow):
         '''
         deletes selected row of table when delete is pressed
         '''
-        if self.selected_box >= 0:
-            del self.polar_coords[self.selected_box]
-            del self.saved_bboxes[self.selected_box]
-        self.load_table()
-        self.redraw()
+        if self.displayed:
+            if self.selected:
+                if self.selected_box >= 0:
+                    del self.polar_coords[self.selected_box]
+                    del self.saved_bboxes[self.selected_box]
+                    self.selected_box = -1
+                self.load_table()
+                self.redraw()
 
     def btnstate_normal(self):
         '''
@@ -383,10 +399,7 @@ class MainApp(QMainWindow):
         self.use_other = False
         self.use_color = False
         if self.displayed:
-            if self.selected:
-                self.redraw()
-            else:
-                w, h = self.painter.set_image(numpy=True, numpy_img=self.normal_image)
+            self.redraw()
 
     def btnstate_contrast(self):
         '''
@@ -396,10 +409,7 @@ class MainApp(QMainWindow):
         self.use_other = True
         self.use_color = False
         if self.displayed:
-            if self.selected:
-                self.redraw()
-            else:
-                w, h = self.painter.set_image(numpy=True, numpy_img=self.sun_image)
+            self.redraw()
 
     def btnstate_color(self):
         '''
@@ -409,10 +419,7 @@ class MainApp(QMainWindow):
         self.use_other = False
         self.use_color = True
         if self.displayed:
-            if self.selected:
-                self.redraw()
-            else:
-                w, h = self.painter.set_image(numpy=True, numpy_img=self.color_image)
+            self.redraw()
 
     def circle_center(self):
         '''
@@ -458,7 +465,13 @@ class MainApp(QMainWindow):
         '''
         displays the selected image file
         '''
+        self.selected = False
         self.boxes = []
+        self.selected_box = -1
+        self.table.setRowCount(1)
+        for col in range(len(self.table_header)):
+            self.table.setColumnWidth(col, self.table_col_width[col])
+            self.table.setItem(0, col, QTableWidgetItem(self.table_header[col]))
         try:
             image_path = self.file_path.text()
             self.output_file_loc = image_path
@@ -472,11 +485,9 @@ class MainApp(QMainWindow):
                 # 2. * 255, to RGB
                 self.normal_image = to_rgb(img)
 
-                dark, bright = get_stat(img)
-                self.sun_image = np.clip(img-dark, 0, 1)
-                self.sun_image = cv2.convertScaleAbs(to_rgb(self.sun_image), alpha=3, beta=50)
+                self.sun_image = cv2.convertScaleAbs(to_rgb(img), alpha=3, beta=50)
 
-                sun_image_extra = cv2.cvtColor(self.sun_image, cv2.COLOR_BGR2GRAY)
+                sun_image_extra = (img*255).astype(np.uint8)
                 sun_image_extra = cv2.medianBlur(sun_image_extra,5)
                 circles = cv2.HoughCircles(sun_image_extra, cv2.HOUGH_GRADIENT,2,1200)
                 circle = circles[0,0,:]
@@ -496,6 +507,7 @@ class MainApp(QMainWindow):
                 else:
                     w, h = self.painter.set_image(numpy=True, numpy_img=self.sun_image)
                 self.displayed = True
+                self.redraw()
         except:
             pass
 
