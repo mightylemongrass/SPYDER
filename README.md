@@ -7,9 +7,16 @@ SPYDER is a deep-learning artificial intelligence algorithm that offers an auton
 ## Prerequisites for Running Program
 
 Python 3  
+Pytorch  
+OpenCV  4 or higher  
 Pyqt 5 or higher  
 Astropy  
-OpenCV  4 or higher  
+Pandas  
+  
+Simply install the following prerequisites in a conda environment using the requirements.txt file.  
+```
+pip install -r requirements.txt  
+```
 
 ## Running the Program
 
