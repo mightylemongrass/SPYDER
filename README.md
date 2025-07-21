@@ -77,7 +77,7 @@ First, download all files in the repository and save them in a single folder.
 Then, download the checkpoint file. 
 
 The checkpoint file can be downloaded at this site:  
-https://drive.google.com/drive/folders/1wCbNUMoNF6BgzvsFxPiHMqucphtQI7Gt?q=sharedwith:public%20parent:1wCbNUMoNF6BgzvsFxPiHMqucphtQI7Gt  
+https://drive.google.com/drive/folders/1wCbNUMoNF6BgzvsFxPiHMqucphtQI7Gt  
 
 If using the UI, modify the weights variable as shown below. 
   
