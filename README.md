@@ -84,7 +84,12 @@ If using the UI, modify the weights variable as shown below.
 <img width="919" alt="Screenshot 2025-01-30 at 8 42 03 PM" src="https://github.com/user-attachments/assets/619fe56f-e843-4d11-a2cd-0b31ddb1aa99" />
 
 If batch running, simply modify the values in the yaml file. (shown above)  
-
+  
+## Citation  
+AGU 2025 POSTER:  
+SH43E-VR8630: Solar Prominence YOLO DEtectoR (SPYDER): Robust Detection of Solar Prominences Using a YOLO-Based Model  
+https://agu25.ipostersessions.com/default.aspx?s=AA-53-DB-BA-B7-6D-4F-0F-03-1A-9D-74-2B-2E-B2-EE&guestview=true  
+  
 ## Authors
 Ian Kim  ik9davis@gmail.com  
 Vasyl Yurchyshyn  vasyl.yurchyshyn@njit.edu  
