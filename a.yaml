@@ -1,0 +1,13 @@
+device: cpu
+yolo_conf_threshold: 25
+overlap_threshold: 0.45
+file_path_of_data: /solar_fits_tests
+output_folder_location: /output_tests
+yolo_dir: best(SPYDERV2).pt
+save_images: True
+better_optimization: True
+
+
+
+
+
