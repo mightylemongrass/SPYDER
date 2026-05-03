@@ -1,13 +1,8 @@
-device: cpu
-yolo_conf_threshold: 25
+device: 0
+yolo_conf_threshold: 30
 overlap_threshold: 0.45
-file_path_of_data: /solar_fits_tests
-output_folder_location: /output_tests
-yolo_dir: best(SPYDERV2).pt
+file_path_of_data: D:\\2023_data\\home\\sierra\\vayur\\FDHA\\data_export
+output_folder_location: D:\\2023_output_images\\
+yolo_dir: bestYolo(MAY_2026).pt
 save_images: True
 better_optimization: True
-
-
-
-
-
