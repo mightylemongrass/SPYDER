@@ -74,6 +74,7 @@ def line_height(box):
     for n in range(0, box.shape[0]):
         if box[n, box.shape[1]//2, 0] == 255 and box[n, box.shape[1]//2, 1] == 0 and box[n, box.shape[1]//2, 2] == 255:
             return n
+    return 3
 
 def prom_area(box, lineheight):
     '''
@@ -193,4 +194,3 @@ def save_files(saved_bboxes, filepath):
     '''
     my_df = pd.DataFrame(saved_bboxes, columns=['Image', 'Left Edge', 'Right Edge', 'Height', 'Confidence', "Area", "CenterX", "CenterY", "Radius"])
     my_df.to_csv(filepath, index=False)
-
