@@ -95,7 +95,7 @@ def infer(big_image, conf_thres, overlap_thres, usrdevice, usemiddle=False):
             image = big_image[y:y+size, x:x+size]
             image = cv2.resize(image, (640, 640)) 
 
-            results = model(image, device=usrdevice)
+            results = model(image, device=usrdevice, verbose=False)
 
             result = results[0]
 
@@ -232,9 +232,11 @@ def multifile(filepath, device, output_file_loc, yolo_dir, middle_option, conf_t
 
     fits_list = glob.glob(os.path.join(filepath, "*.fts"))
     csv_save_file = []
+    count = 0
     for fits_file in fits_list:
         small_file_path = os.path.basename(fits_file)
-        print("processing data: ", small_file_path)
+        print("processing data: " + small_file_path + " status: " + str(100* count / len(fits_list)) + "%")
+        count += 1
         try:
             hdul = fits.open(fits_file)
             img = np.array(hdul[0].data)
