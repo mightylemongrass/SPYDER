@@ -1,4 +1,4 @@
-device: 0
+device: "cpu"
 yolo_conf_threshold: 30
 overlap_threshold: 0.45
 file_path_of_data: D:\\2023_data\\home\\sierra\\vayur\\FDHA\\data_export

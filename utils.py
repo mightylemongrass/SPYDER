@@ -17,6 +17,17 @@ import sys
 import os
 import pandas as pd
 import warnings
+import argparse
+import yaml
+import sys
+import ultralytics
+from astropy.io import fits
+import copy
+import glob
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+
 warnings.filterwarnings("ignore")
 ROOT = os.getcwd()
 if str(ROOT) not in sys.path:
@@ -194,3 +205,149 @@ def save_files(saved_bboxes, filepath):
     '''
     my_df = pd.DataFrame(saved_bboxes, columns=['Image', 'Left Edge', 'Right Edge', 'Height', 'Confidence', "Area", "CenterX", "CenterY", "Radius"])
     my_df.to_csv(filepath, index=False)
+
+
+
+def infer(model, big_image, conf_thres, overlap_thres, usrdevice, usemiddle=False):
+
+    """
+            self.inferer(self.model, self.sun_image, self.conf_thres, self.overlap_threshold, None, usemiddle=True)
+    Function to Annotate and label one image
+    """
+
+    duplicate = copy.deepcopy(big_image)
+    size = 640
+
+    H = big_image.shape[0]
+    W = big_image.shape[1]
+
+    coordinates = []
+    ind1 = 0
+    ind2 = 0
+    if H < size:
+        big_image = padding(big_image, 0, size)
+    if W < size:
+        big_image = padding(big_image, 1, size)
+
+    if usemiddle:
+        width = []
+        height = []
+        while True:
+            if ind1+size >= W:
+                width.append(W-size)
+                break
+            else:
+                width.append(ind1)
+                ind1 += int(size*3/4)
+        while True:
+            if ind2+size > H:
+                height.append(H-size)
+                break                    
+            else:
+                height.append(ind2)
+                ind2 += int(size*3/4)
+        for x in width:
+            coordinates.append([x, height[0]])
+            coordinates.append([x, height[-1]])
+        for y in height[1:-1]:
+            coordinates.append([width[0], y])
+            coordinates.append([width[-1], y])
+        
+
+    else:
+        while True:
+            temp = []
+            
+            
+            if ind1+size >= W:
+                temp.append(W-size)
+                ind1 = -1
+            else:
+                temp.append(ind1)
+                ind1 += int(size/2)
+            if ind2+size > H:
+                temp.append(H-size)
+                ind2 = H-size
+                
+            else:
+                temp.append(ind2)
+                if ind1 == -1:
+                    if ind2 == H-size:
+                        coordinates.append(temp)
+                        break
+                    ind2 += int(size/2)
+                    ind1 = 0
+
+
+            coordinates.append(temp)
+
+
+    overlap_checker = np.zeros([H, W], dtype=np.uint8)
+    returned = []
+
+    for ind, (x, y) in enumerate(coordinates):
+        image = big_image[y:y+size, x:x+size]
+        image = cv2.resize(image, (640, 640)) 
+
+        results = model(image, device=usrdevice, verbose=False)
+
+        result = results[0]
+
+        if result.boxes is None or len(result.boxes) == 0:
+            num_filtered_detections = 0
+        else:
+            boxes = result.boxes
+            class_ids = boxes.cls
+            confs = boxes.conf
+
+            target_class_id = 0
+
+            mask = (class_ids == target_class_id) & (confs >= conf_thres)
+
+            filtered_boxes = boxes[mask]
+
+            result.boxes = filtered_boxes
+            
+            det = filtered_boxes.data.cpu()
+
+            for *xyxy, conf, cls in reversed(det):
+
+                x1 = int(xyxy[0]) + x
+                y1 = int(xyxy[1]) + y
+                x2 = int(xyxy[2]) + x
+                y2 = int(xyxy[3]) + y
+
+                block = overlap_checker[y1:y2, x1:x2].astype(np.float32)
+                block_mean = np.mean(block)
+                
+                if block_mean > overlap_thres:
+                    continue
+                
+                overlap_checker[y1:y2, x1:x2] = 255
+                new_xyxy = [x1, y1, x2, y2]
+                line = [int(cls), new_xyxy, float(conf)] 
+                returned.append(line)
+
+                cv2.rectangle(duplicate, (x1, y1), (x2, y2), (255, 0, 0), 3)
+            
+
+    overlap_checker = np.zeros([H, W], dtype=np.uint8)
+
+    returned_boxes = []
+
+
+    for n in returned[::-1]:
+        
+        x1, y1, x2, y2 = n[1] 
+
+        block = overlap_checker[y1:y2, x1:x2].astype(np.float32)
+        block_mean = np.mean(block)
+    
+        if block_mean > overlap_thres:
+            continue
+        overlap_checker[y1:y2, x1:x2] = 255
+        returned_boxes.append(n)
+
+    return returned_boxes
+
+

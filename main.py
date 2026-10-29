@@ -10,158 +10,15 @@
 #################################################################################################
 
 
+from ui import *
 from utils import *
-from astropy.io import fits
-import copy
-import glob
-import argparse
-import yaml
-import sys
-import ultralytics
 sys.stdout.flush()
 
-def infer(big_image, conf_thres, overlap_thres, usrdevice, usemiddle=False):
-        duplicate = copy.deepcopy(big_image)
-        size = 640
-
-        H = big_image.shape[0]
-        W = big_image.shape[1]
-
-        coordinates = []
-        ind1 = 0
-        ind2 = 0
-        if H < size:
-            big_image = padding(big_image, 0, size)
-        if W < size:
-            big_image = padding(big_image, 1, size)
-
-        if usemiddle:
-            width = []
-            height = []
-            while True:
-                if ind1+size >= W:
-                    width.append(W-size)
-                    break
-                else:
-                    width.append(ind1)
-                    ind1 += int(size*3/4)
-            while True:
-                if ind2+size > H:
-                    height.append(H-size)
-                    break                    
-                else:
-                    height.append(ind2)
-                    ind2 += int(size*3/4)
-            for x in width:
-                coordinates.append([x, height[0]])
-                coordinates.append([x, height[-1]])
-            for y in height[1:-1]:
-                coordinates.append([width[0], y])
-                coordinates.append([width[-1], y])
-            
-
-        else:
-            while True:
-                temp = []
-                
-                
-                if ind1+size >= W:
-                    temp.append(W-size)
-                    ind1 = -1
-                else:
-                    temp.append(ind1)
-                    ind1 += int(size/2)
-                if ind2+size > H:
-                    temp.append(H-size)
-                    ind2 = H-size
-                    
-                else:
-                    temp.append(ind2)
-                    if ind1 == -1:
-                        if ind2 == H-size:
-                            coordinates.append(temp)
-                            break
-                        ind2 += int(size/2)
-                        ind1 = 0
-
-
-                coordinates.append(temp)
-
-
-        overlap_checker = np.zeros([H, W], dtype=np.uint8)
-        returned = []
-
-        for ind, (x, y) in enumerate(coordinates):
-            image = big_image[y:y+size, x:x+size]
-            image = cv2.resize(image, (640, 640)) 
-
-            results = model(image, device=usrdevice, verbose=False)
-
-            result = results[0]
-
-            if result.boxes is None or len(result.boxes) == 0:
-                num_filtered_detections = 0
-            else:
-                boxes = result.boxes
-                class_ids = boxes.cls
-                confs = boxes.conf
-
-                target_class_id = 0
-
-                mask = (class_ids == target_class_id) & (confs >= conf_thres)
-
-                filtered_boxes = boxes[mask]
-
-                result.boxes = filtered_boxes
-                
-                det = filtered_boxes.data.cpu()
-
-                for *xyxy, conf, cls in reversed(det):
-
-                    x1 = int(xyxy[0]) + x
-                    y1 = int(xyxy[1]) + y
-                    x2 = int(xyxy[2]) + x
-                    y2 = int(xyxy[3]) + y
-
-                    block = overlap_checker[y1:y2, x1:x2].astype(np.float32)
-                    block_mean = np.mean(block)
-                    
-                    if block_mean > overlap_thres:
-                        continue
-                    
-                    overlap_checker[y1:y2, x1:x2] = 255
-                    new_xyxy = [x1, y1, x2, y2]
-                    line = [int(cls), new_xyxy, float(conf)] 
-                    returned.append(line)
-
-                    cv2.rectangle(duplicate, (x1, y1), (x2, y2), (255, 0, 0), 3)
-                
-
-        overlap_checker = np.zeros([H, W], dtype=np.uint8)
-
-        returned_boxes = []
-
-
-        for n in returned[::-1]:
-            
-            x1, y1, x2, y2 = n[1]
-            
-
-            block = overlap_checker[y1:y2, x1:x2].astype(np.float32)
-            block_mean = np.mean(block)
-        
-            if block_mean > overlap_thres:
-                continue
-            overlap_checker[y1:y2, x1:x2] = 255
-            returned_boxes.append(n)
-
-        return returned_boxes
-    
-
-    
-
-
 def custom_folder(filepath, device, output_file_loc, yolo_dir, middle_option, conf_threshold=25, iou_threshold=0.45, save_images=False, start_time=None, end_time=None):
+
+    """
+    Function to Process all image files between (Starting Date, Endin Date) - ONLY WORKS FOR BBSO FOLDER SETUP
+    """
     format_sd = [int(n) for n in start_time.split('/')]
     format_ed = [int(n) for n in  end_time.split('/')]
     year_list = next(os.walk(filepath))[1]
@@ -260,7 +117,7 @@ def multifile(filepath, device, output_file_loc, yolo_dir, middle_option, conf_t
             sun_image = cv2.cvtColor(sun_image, cv2.COLOR_RGB2BGR)
             sun_image2 = cv2.convertScaleAbs(normal_image, alpha=0.9, beta=-10)
 
-            boxes = infer(sun_image, conf_threshold*0.01, iou_threshold, device, middle_option) 
+            boxes = infer(model, sun_image, conf_threshold*0.01, iou_threshold, device, middle_option) 
             polar_coords = []
 
             if save_images:
@@ -297,14 +154,14 @@ def args_parser():
     '''
     parser = argparse.ArgumentParser(description='YOLOv6 PyTorch Training', add_help=True)
     parser.add_argument("--cmd-mode", action="store_true", help="Enable yaml/command line mode")
-    parser.add_argument('--yaml-path', default='parameters.yaml', type=str, help='path of yaml (--use-yaml argument must be set to True)')
+    parser.add_argument('--yaml-path', default='a.yaml', type=str, help='path of yaml (--use-yaml argument must be set to True)')
     parser.add_argument('--input-path', default=None, type=str, help='fits file locations only used when yaml is not used')
     parser.add_argument('--output-path', default=None, type=str, help='output file locations when yaml is not used')
     parser.add_argument('--start-date', default=None, type=str, help='start date of photos (ONLY FOR NJIT)')
     parser.add_argument('--end-date', default=None, type=str, help='end date of photos (ONLY FOR NJIT)')
     return parser
 
-def yaml_startup(yaml_filepath, input_file=None, output_file=None, start=None, end=None):
+def yaml_startup(yaml_filepath, input_file=None, output_file=None, start=None, end=None, ui=False):
     '''
     reads in yaml settings and calls main function with these settings
     
@@ -320,30 +177,40 @@ def yaml_startup(yaml_filepath, input_file=None, output_file=None, start=None, e
     yolo_dir = data['yolo_dir']
     save_images = data['save_images']
     middle_option = data['better_optimization']
-
-    if input_file == None and output_file == None:
-        directory = data['file_path_of_data']
-        output_file = data['output_folder_location']
-    else:
-        directory = input_file
-        output_file = output_file
     
-    if start != None and end != None:
-        custom_folder(directory, device, output_file, yolo_dir, middle_option, conf_threshold, overlap_threshold, save_images=save_images, start_time=start, end_time=end)
+    if ui: 
+        app = QApplication(sys.argv)
+        window = MainApp(device, yolo_dir)
+        window.show()
+        sys.exit(app.exec_())
     else:
-        multifile(directory, device, output_file, yolo_dir, middle_option, conf_threshold, overlap_threshold, save_images=save_images)
+        if input_file == None and output_file == None:
+            directory = data['file_path_of_data']
+            output_file = data['output_folder_location']
+        else:
+            directory = input_file
+            output_file = output_file
+        
+        if start != None and end != None:
+            custom_folder(directory, device, output_file, yolo_dir, middle_option, conf_threshold, overlap_threshold, save_images=save_images, start_time=start, end_time=end)
+        else:
+            multifile(directory, device, output_file, yolo_dir, middle_option, conf_threshold, overlap_threshold, save_images=save_images)
+
 
 args = args_parser().parse_args()
 
+if not args.cmd_mode: # Create the application and the main window
+    yaml_startup(args.yaml_path, ui=True)
 
+else: # Uses yaml file as input instead
+    if args.input_path is not None and args.output_path is not None:
+        if args.start_date is not None and args.end_date is not None:
+            yaml_startup(args.yaml_path, args.input_path, args.output_path, start=args.start_date, end=args.end_date)
+        else:
+            yaml_startup(args.yaml_path, args.input_path, args.output_path)
+    else:
+        if args.start_date is not None and args.end_date is not None:
+            yaml_startup(args.yaml_path, start=args.start_date, end=args.end_date)
+        else:
+            yaml_startup(args.yaml_path)
 
-if args.input_path is not None and args.output_path is not None:
-    if args.start_date is not None and args.end_date is not None:
-        yaml_startup(args.yaml_path, args.input_path, args.output_path, start=args.start_date, end=args.end_date)
-    else:
-        yaml_startup(args.yaml_path, args.input_path, args.output_path)
-else:
-    if args.start_date is not None and args.end_date is not None:
-        yaml_startup(args.yaml_path, start=args.start_date, end=args.end_date)
-    else:
-        yaml_startup(args.yaml_path)
