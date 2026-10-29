@@ -199,9 +199,9 @@ class MainApp(QMainWindow):
         self.selected = False
         self.selected_box = -1
         self.saved_bboxes = []
-        self.output_file_loc = ""
         self.init_window()
         self.device = device
+        self.save_path = ""
 
     def init_window(self):
         '''
@@ -255,12 +255,24 @@ class MainApp(QMainWindow):
         self.bottom_widget.setLayout(self.bottom_layout)
         self.bottom_widget.setMaximumHeight(self.frameGeometry().height()//3)
 
+        self.open_save_directory_button = QPushButton('Open Save Directory')
+        self.open_save_directory_button.clicked.connect(self.on_save_button)
+        self.save_file_path_line_edit = QLineEdit(self)
+        self.save_file_path_line_edit.setObjectName("file path")
+        self.save_file_path_line_edit.returnPressed.connect(self.on_save_return)
+        self.save_widget = QWidget(self)
+        self.save_layout = QHBoxLayout()
+        self.save_layout.addWidget(self.save_file_path_line_edit)
+        self.save_layout.addWidget(self.open_save_directory_button) 
+        self.save_widget.setLayout(self.save_layout)
+
         self.widget2 = QWidget(self)
         self.main_dock = QVBoxLayout()
         self.main_dock.addWidget(self.widget1)
         self.main_dock.addWidget(self.painter)
         self.main_dock.addWidget(self.bottom_widget)
         self.main_dock.addWidget(self.bottom_buttons)
+        self.main_dock.addWidget(self.save_widget)
         self.widget2.setLayout(self.main_dock)
         
         
@@ -375,8 +387,22 @@ class MainApp(QMainWindow):
         if self.displayed == True:
             if self.selected == True:
                 base = os.path.splitext(self.img_dir)[0]
-                save_files(self.saved_bboxes, os.path.join(self.output_file_loc, base+".csv"))
-                cv2.imwrite(os.path.join(self.output_file_loc, base+".png"), self.redraw(r=True))
+                save_files(self.saved_bboxes, os.path.join(self.save_path, base+".csv"))
+                cv2.imwrite(os.path.join(self.save_path, base+".png"), self.redraw(r=True))
+
+    def on_save_button(self):
+        '''
+        Opens popup menu where user can select directory when save_path button is pressed
+        '''
+        self.save_path = QFileDialog.getExistingDirectory(self, 'Open File', os.getcwd())
+        self.save_file_path_line_edit.setText(str(self.save_path))
+    
+    def on_save_return(self):
+        '''
+        Sets save_path variable to text in save_path text bar when enter is pressed
+        '''
+        self.save_path = self.save_file_path_line_edit.text() 
+        self.save_file_path_line_edit.setText(str(self.save_path))
 
     def delete_box(self):
         '''
@@ -474,7 +500,6 @@ class MainApp(QMainWindow):
             self.table.setItem(0, col, QTableWidgetItem(self.table_header[col]))
         try:
             image_path = self.file_path.text()
-            self.output_file_loc = image_path
             if os.path.isfile(os.path.join(image_path, self.toolbox.listWidget.selectedItems()[0].text())):
                 hdul = fits.open(os.path.join(image_path, self.toolbox.listWidget.selectedItems()[0].text()))
                 self.img_dir = self.toolbox.listWidget.selectedItems()[0].text()
