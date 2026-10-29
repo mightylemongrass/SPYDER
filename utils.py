@@ -16,10 +16,18 @@ import math
 import sys
 import os
 import pandas as pd
+import warnings
+import argparse
+import yaml
+import sys
+import ultralytics
+from astropy.io import fits
+import copy
+import glob
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-import warnings
+
 warnings.filterwarnings("ignore")
 ROOT = os.getcwd()
 if str(ROOT) not in sys.path:
@@ -67,7 +75,7 @@ def image_height(box):
     finds the very top of the prominence
     '''
     for n in range(0, box.shape[0]):
-        if np.mean(box[n,:,:]) > 60:
+        if np.mean(box[n,:,:]) > 45:
             return n
 
 def line_height(box):
@@ -77,6 +85,7 @@ def line_height(box):
     for n in range(0, box.shape[0]):
         if box[n, box.shape[1]//2, 0] == 255 and box[n, box.shape[1]//2, 1] == 0 and box[n, box.shape[1]//2, 2] == 255:
             return n
+    return 3
 
 def prom_area(box, lineheight):
     '''
@@ -85,7 +94,7 @@ def prom_area(box, lineheight):
     area = 0
     for n in range(0, lineheight):
         for m in range(0, box.shape[1]):
-            if np.mean(box[n,m,:]) > 50:
+            if np.mean(box[n,m,:]) > 60:
                 area += 1
     return area
 
@@ -157,40 +166,37 @@ def format_boxes(boxes, sun_radius, sun_cx, sun_cy, duplicate2, show_boxes=False
     saved_bboxes = []
     for index, line in enumerate(boxes):
         x1, y1, x2, y2 = line[1]
-        if int(line[0]) == 1:
-            midx = (x1+x2)/2
-            midy = (y1+y2)/2
-            circumference = sun_radius*2.0*math.pi
-            distance = max(abs(x2-x1), abs(y2-y1))
-            angular_distance = (distance*360.0)/circumference
-            degrees = polar(midx, midy, sun_cx, sun_cy)
-            box = rotate_image(duplicate2[y1:y2, x1:x2, :], degrees+90)
-            try:
-                lineheight = line_height(box) # distance from top of box to line
-                extra = abs(image_height(box)-lineheight)
-                box2 = box[0:lineheight, :, :]
-                area = prom_area(box, lineheight)
-                #(str(index)+' '+str(area)+".png", box)
-                #cv2.imwrite(str(index)+' '+str(area)+"top.png", box2)
-                degree1 = degrees-(angular_distance/2.0)
-                degree2 = degrees+(angular_distance/2.0)
+        midx = (x1+x2)/2
+        midy = (y1+y2)/2
+        circumference = sun_radius*2.0*math.pi
+        distance = max(abs(x2-x1), abs(y2-y1))
+        angular_distance = (distance*360.0)/circumference
+        degrees = polar(midx, midy, sun_cx, sun_cy)
+        box = rotate_image(duplicate2[y1:y2, x1:x2, :], degrees+90)
+        try:
+            lineheight = line_height(box) # distance from top of box to line
+            extra = abs(image_height(box)-lineheight)
+            box2 = box[0:lineheight, :, :]
+            area = prom_area(box, lineheight)
+            degree1 = degrees-(angular_distance/2.0)
+            degree2 = degrees+(angular_distance/2.0)
 
-                px1, py1 = xy(radian(degree1), sun_radius, sun_cx, sun_cy)
-                px2, py2 = xy(radian(degree1), sun_radius+extra, sun_cx, sun_cy)
-                px3, py3 = xy(radian(degree2), sun_radius, sun_cx, sun_cy)
-                px4, py4 = xy(radian(degree2), sun_radius+extra, sun_cx, sun_cy)
+            px1, py1 = xy(radian(degree1), sun_radius, sun_cx, sun_cy)
+            px2, py2 = xy(radian(degree1), sun_radius+extra, sun_cx, sun_cy)
+            px3, py3 = xy(radian(degree2), sun_radius, sun_cx, sun_cy)
+            px4, py4 = xy(radian(degree2), sun_radius+extra, sun_cx, sun_cy)
 
-                temp = [float(line[2]), px1, py1, px2, py2, px3, py3, px4, py4 ,degree1, degree2, extra, area]
-                polar_coords.append(temp)
-                if show_boxes == True:
-                    draw_ellipse(degree1, degree2, sun_radius, sun_cx, sun_cy, extra, duplicate)
-                    cv2.line(duplicate, (px1, py1), (px2, py2), (0, 255, 0), 2)
-                    cv2.line(duplicate, (px3, py3), (px4, py4), (0, 255, 0), 2)
-                temp2 = [img_dir, str(degree1), str(degree2), str(extra), str(float(line[2])), str(area), sun_cx, sun_cy, sun_radius]
-                saved_bboxes.append(temp2)
-            except:
-                continue
-
+            temp = [float(line[2]), px1, py1, px2, py2, px3, py3, px4, py4 ,degree1, degree2, extra, area]
+            polar_coords.append(temp)
+            if show_boxes == True:
+                draw_ellipse(degree1, degree2, sun_radius, sun_cx, sun_cy, extra, duplicate)
+                cv2.line(duplicate, (px1, py1), (px2, py2), (0, 255, 0), 2)
+                cv2.line(duplicate, (px3, py3), (px4, py4), (0, 255, 0), 2)
+            temp2 = [img_dir, str(degree1), str(degree2), str(extra), str(float(line[2])), str(area), sun_cx, sun_cy, sun_radius]
+            saved_bboxes.append(temp2)
+        except Exception as error: 
+            print(f"An exception occurred while drawing polar coords: {error}")
+            pass
     return saved_bboxes, polar_coords, duplicate
     
 def save_files(saved_bboxes, filepath):
@@ -199,4 +205,149 @@ def save_files(saved_bboxes, filepath):
     '''
     my_df = pd.DataFrame(saved_bboxes, columns=['Image', 'Left Edge', 'Right Edge', 'Height', 'Confidence', "Area", "CenterX", "CenterY", "Radius"])
     my_df.to_csv(filepath, index=False)
+
+
+
+def infer(model, big_image, conf_thres, overlap_thres, usrdevice, usemiddle=False):
+
+    """
+            self.inferer(self.model, self.sun_image, self.conf_thres, self.overlap_threshold, None, usemiddle=True)
+    Function to Annotate and label one image
+    """
+
+    duplicate = copy.deepcopy(big_image)
+    size = 640
+
+    H = big_image.shape[0]
+    W = big_image.shape[1]
+
+    coordinates = []
+    ind1 = 0
+    ind2 = 0
+    if H < size:
+        big_image = padding(big_image, 0, size)
+    if W < size:
+        big_image = padding(big_image, 1, size)
+
+    if usemiddle:
+        width = []
+        height = []
+        while True:
+            if ind1+size >= W:
+                width.append(W-size)
+                break
+            else:
+                width.append(ind1)
+                ind1 += int(size*3/4)
+        while True:
+            if ind2+size > H:
+                height.append(H-size)
+                break                    
+            else:
+                height.append(ind2)
+                ind2 += int(size*3/4)
+        for x in width:
+            coordinates.append([x, height[0]])
+            coordinates.append([x, height[-1]])
+        for y in height[1:-1]:
+            coordinates.append([width[0], y])
+            coordinates.append([width[-1], y])
+        
+
+    else:
+        while True:
+            temp = []
+            
+            
+            if ind1+size >= W:
+                temp.append(W-size)
+                ind1 = -1
+            else:
+                temp.append(ind1)
+                ind1 += int(size/2)
+            if ind2+size > H:
+                temp.append(H-size)
+                ind2 = H-size
+                
+            else:
+                temp.append(ind2)
+                if ind1 == -1:
+                    if ind2 == H-size:
+                        coordinates.append(temp)
+                        break
+                    ind2 += int(size/2)
+                    ind1 = 0
+
+
+            coordinates.append(temp)
+
+
+    overlap_checker = np.zeros([H, W], dtype=np.uint8)
+    returned = []
+
+    for ind, (x, y) in enumerate(coordinates):
+        image = big_image[y:y+size, x:x+size]
+        image = cv2.resize(image, (640, 640)) 
+
+        results = model(image, device=usrdevice, verbose=False)
+
+        result = results[0]
+
+        if result.boxes is None or len(result.boxes) == 0:
+            num_filtered_detections = 0
+        else:
+            boxes = result.boxes
+            class_ids = boxes.cls
+            confs = boxes.conf
+
+            target_class_id = 0
+
+            mask = (class_ids == target_class_id) & (confs >= conf_thres)
+
+            filtered_boxes = boxes[mask]
+
+            result.boxes = filtered_boxes
+            
+            det = filtered_boxes.data.cpu()
+
+            for *xyxy, conf, cls in reversed(det):
+
+                x1 = int(xyxy[0]) + x
+                y1 = int(xyxy[1]) + y
+                x2 = int(xyxy[2]) + x
+                y2 = int(xyxy[3]) + y
+
+                block = overlap_checker[y1:y2, x1:x2].astype(np.float32)
+                block_mean = np.mean(block)
+                
+                if block_mean > overlap_thres:
+                    continue
+                
+                overlap_checker[y1:y2, x1:x2] = 255
+                new_xyxy = [x1, y1, x2, y2]
+                line = [int(cls), new_xyxy, float(conf)] 
+                returned.append(line)
+
+                cv2.rectangle(duplicate, (x1, y1), (x2, y2), (255, 0, 0), 3)
+            
+
+    overlap_checker = np.zeros([H, W], dtype=np.uint8)
+
+    returned_boxes = []
+
+
+    for n in returned[::-1]:
+        
+        x1, y1, x2, y2 = n[1] 
+
+        block = overlap_checker[y1:y2, x1:x2].astype(np.float32)
+        block_mean = np.mean(block)
+    
+        if block_mean > overlap_thres:
+            continue
+        overlap_checker[y1:y2, x1:x2] = 255
+        returned_boxes.append(n)
+
+    return returned_boxes
+
 

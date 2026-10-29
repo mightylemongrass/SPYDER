@@ -12,10 +12,6 @@
 
 
 from utils import *
-from yolov6.core.inferer_prominence import Inferer
-from astropy.io import fits
-import copy
-import glob
 
 class MainImage(QWidget): 
     '''
@@ -34,6 +30,7 @@ class MainImage(QWidget):
         self.image_pixmap.fill(Qt.white)
         self.image_scale = 1.0
         self.setMinimumSize(500, 400)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.show()
 
     def set_image(self, numpy=False, numpy_img=None):
@@ -48,27 +45,30 @@ class MainImage(QWidget):
         return self.image_pixmap.width(), self.image_pixmap.height()
 
     def paintEvent(self, event):
-        '''
-        changing the dimensions of the image when window is resized
-        '''
-        painter = QPainter()
-        painter.begin(self)
-        if self.image_pixmap and self.image_pixmap.size().width() > 0:
-            paint_w = float(self.size().width())
-            paint_h = float(self.size().height())
-            image_w = float(self.image_pixmap.size().width())
-            image_h = float(self.image_pixmap.size().height())
-            
-            resized_w = paint_w
-            resized_h = paint_w * image_h / image_w
+        if self.image_pixmap.isNull():
+            return
 
-            if resized_h > paint_h:
-                resized_w = paint_h * image_w / image_h
-                resized_h = paint_h
-            self.image_scale = resized_w / image_w
-            resized = self.image_pixmap.scaled(int(resized_w), int(resized_h))
-        painter.drawPixmap(0, 0, resized)
-        painter.end()
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
+
+        # Scale image to fit the available widget area
+        scaled_pixmap = self.image_pixmap.scaled(
+            self.size(),
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation
+        )
+
+        # Center the image inside the widget
+        x = (self.width() - scaled_pixmap.width()) // 2
+        y = (self.height() - scaled_pixmap.height()) // 2
+
+        # Keep track of the image scale for mouse-coordinate mapping
+        self.image_scale = (
+            scaled_pixmap.width() / self.image_pixmap.width()
+        )
+
+        painter.drawPixmap(x, y, scaled_pixmap)
+
             
     def mousePressEvent(self, mouse_event):
         pass
@@ -168,11 +168,12 @@ class MainApp(QMainWindow):
     UI can be updated through MainApp
     '''
 
-    def __init__(self):
+    def __init__(self, device, weights):
         '''
         initalizes all variables
         '''
         super(MainApp, self).__init__()
+        
         self.title = 'SPYDER'
         self.left = 20
         self.top = 20
@@ -187,11 +188,8 @@ class MainApp(QMainWindow):
         self.show_circle_center = True
         self.show_boxes = True
 
-        # You must replace the filepath below with the actual filepath of the checkpoint file on your computer
-
-        weights = "/Users/iankim/Documents/Programming/SPYDER/weightsv3/best_ckpt.pt"
         img_size = 640
-        self.inferer = Inferer(weights, "0", img_size)
+        self.model = ultralytics.YOLO(weights)
         self.conf_thres = 0.05
         self.iou_thres = 0.45
         self.max_det = 1000
@@ -203,6 +201,7 @@ class MainApp(QMainWindow):
         self.saved_bboxes = []
         self.output_file_loc = ""
         self.init_window()
+        self.device = device
 
     def init_window(self):
         '''
@@ -212,6 +211,7 @@ class MainApp(QMainWindow):
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.painter = MainImage(self)
         self.installEventFilter(self.painter)
+        self.painter.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.toolbox = MainTool(self)
         self.toolbox.setMaximumWidth(250)
@@ -244,7 +244,7 @@ class MainApp(QMainWindow):
         self.delete_button.clicked.connect(self.delete_box)
 
         self.bottom_buttons = QWidget(self)
-        self.button_layout = QVBoxLayout()
+        self.button_layout = QHBoxLayout()
         self.button_layout.addWidget(self.delete_button)
         self.button_layout.addWidget(self.save_button)
         self.bottom_buttons.setLayout(self.button_layout)
@@ -252,7 +252,6 @@ class MainApp(QMainWindow):
         self.bottom_widget = QWidget(self)
         self.bottom_layout = QHBoxLayout()
         self.bottom_layout.addWidget(self.table)
-        self.bottom_layout.addWidget(self.bottom_buttons)
         self.bottom_widget.setLayout(self.bottom_layout)
         self.bottom_widget.setMaximumHeight(self.frameGeometry().height()//3)
 
@@ -261,6 +260,7 @@ class MainApp(QMainWindow):
         self.main_dock.addWidget(self.widget1)
         self.main_dock.addWidget(self.painter)
         self.main_dock.addWidget(self.bottom_widget)
+        self.main_dock.addWidget(self.bottom_buttons)
         self.widget2.setLayout(self.main_dock)
         
         
@@ -517,36 +517,46 @@ class MainApp(QMainWindow):
         '''
         runs image through the model and annotates image
         '''
-        if self.displayed == True:
+        if self.displayed is True:
 
-            self.boxes = self.inferer.inferv2(self.sun_image, self.conf_thres, self.iou_thres,\
-                                None, self.agnostic_nms, self.max_det, self.conf_threshold*0.01, self.overlap_threshold, usemiddle=True)
+
+            self.boxes = infer(self.model, self.sun_image, self.conf_thres, self.overlap_threshold, self.device, usemiddle=True) 
+            print(self.boxes)
+
             self.polar_coords = []
 
-            if self.use_regular == True:
+            if self.use_regular:
                 duplicate = copy.deepcopy(self.normal_image)
 
-            if self.use_other == True:
+            elif self.use_other:
                 duplicate = copy.deepcopy(self.sun_image)
 
-            if self.use_color == True:
+            elif self.use_color:
                 duplicate = copy.deepcopy(self.color_image)
 
+            else:
+                duplicate = copy.deepcopy(self.sun_image)
+
             duplicate2 = copy.deepcopy(self.sun_image)
+
             cv2.circle(duplicate2, (self.sun_cx, self.sun_cy), 7, (0, 0, 255), -1)
             cv2.circle(duplicate2, (self.sun_cx, self.sun_cy), self.sun_radius, (255, 0, 255), 2)
 
-            if self.show_circle_center == True:
+            if self.show_circle_center:
                 cv2.circle(duplicate, (self.sun_cx, self.sun_cy), 7, (0, 0, 255), -1)
-                cv2.circle(duplicate, (self.sun_cx, self.sun_cy), self.sun_radius, (255, 0, 255), 2)
+                cv2.circle(duplicate, (self.sun_cx, self.sun_cy), self.sun_radius, (255, 0, 255),2)
+
             self.saved_bboxes, self.polar_coords, duplicate = format_boxes(self.boxes, self.sun_radius, self.sun_cx,\
                                  self.sun_cy, duplicate2, show_boxes=self.show_boxes, img_dir=self.img_dir, duplicate=duplicate)
 
-
-            w, h = self.painter.set_image(numpy=True, numpy_img=duplicate)
+            w, h = self.painter.set_image(
+                numpy=True,
+                numpy_img=duplicate
+            )
 
             self.load_table()
-            self.selected = True
+            self.selected = True    
+
 
     def valuechanged(self):
         '''

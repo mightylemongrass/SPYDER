@@ -1,12 +1,8 @@
-device: 0
-yolo_conf_threshold: 25
+device: "cpu"
+yolo_conf_threshold: 30
 overlap_threshold: 0.45
-file_path_of_data: C:\\Users\\ianki\\Downloads\\fdha-jun04\\ja3
-output_folder_location: C:\\Users\\ianki\\Downloads\\SPYDER_date_tester2
-yolo_dir: "C:\\Users\\ianki\\Documents\\2023-2024_coding\\AI_studies\\solar_prominence_final\\weightsv4\\best_ckpt.pt"
+file_path_of_data: D:\\2023_data\\home\\sierra\\vayur\\FDHA\\data_export
+output_folder_location: D:\\2023_output_images\\
+yolo_dir: bestYolo(MAY_2026).pt
 save_images: True
 better_optimization: True
-
-
-
-

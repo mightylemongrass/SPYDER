@@ -11,11 +11,14 @@
 
 
 from ui import *
-import argparse
-import yaml
-
+from utils import *
+sys.stdout.flush()
 
 def custom_folder(filepath, device, output_file_loc, yolo_dir, middle_option, conf_threshold=25, iou_threshold=0.45, save_images=False, start_time=None, end_time=None):
+
+    """
+    Function to Process all image files between (Starting Date, Endin Date) - ONLY WORKS FOR BBSO FOLDER SETUP
+    """
     format_sd = [int(n) for n in start_time.split('/')]
     format_ed = [int(n) for n in  end_time.split('/')]
     year_list = next(os.walk(filepath))[1]
@@ -81,11 +84,16 @@ def multifile(filepath, device, output_file_loc, yolo_dir, middle_option, conf_t
     @param save_images: option to save images to output folder
     
     '''
-    inferer = Inferer(yolo_dir, device, 640)
+    global model
+    model = ultralytics.YOLO(yolo_dir)
+
     fits_list = glob.glob(os.path.join(filepath, "*.fts"))
     csv_save_file = []
+    count = 0
     for fits_file in fits_list:
         small_file_path = os.path.basename(fits_file)
+        print("processing data: " + small_file_path + " status: " + str(100* count / len(fits_list)) + "%")
+        count += 1
         try:
             hdul = fits.open(fits_file)
             img = np.array(hdul[0].data)
@@ -108,9 +116,8 @@ def multifile(filepath, device, output_file_loc, yolo_dir, middle_option, conf_t
             normal_image = cv2.cvtColor(normal_image, cv2.COLOR_RGB2BGR)
             sun_image = cv2.cvtColor(sun_image, cv2.COLOR_RGB2BGR)
             sun_image2 = cv2.convertScaleAbs(normal_image, alpha=0.9, beta=-10)
-            #color_image = cv2.cvtColor(cv2.applyColorMap(sun_image2, cv2.COLORMAP_HOT), cv2.COLOR_RGB2BGR)
-            boxes = inferer.inferv2(sun_image, 0.05, iou_threshold,\
-                                                None, False, 1000, conf_threshold*0.01, 90, usemiddle=middle_option)
+
+            boxes = infer(model, sun_image, conf_threshold*0.01, iou_threshold, device, middle_option) 
             polar_coords = []
 
             if save_images:
@@ -132,9 +139,9 @@ def multifile(filepath, device, output_file_loc, yolo_dir, middle_option, conf_t
                 saved_bboxes, polar_coords, duplicate = format_boxes(boxes, sun_radius, sun_cx,\
                                     sun_cy, duplicate2, ui=True, show_boxes=False, img_dir=small_file_path)
             csv_save_file.extend(saved_bboxes)
-        except:
+        except Exception as error: 
+            print(f"An exception occurred: {error}")
             pass
-    #print(os.path.join(output_file_loc, "saved_bboxes.csv"))
     if date==True:
         return csv_save_file
     else:
@@ -147,14 +154,14 @@ def args_parser():
     '''
     parser = argparse.ArgumentParser(description='YOLOv6 PyTorch Training', add_help=True)
     parser.add_argument("--cmd-mode", action="store_true", help="Enable yaml/command line mode")
-    parser.add_argument('--yaml-path', default='parameters.yaml', type=str, help='path of yaml (--use-yaml argument must be set to True)')
+    parser.add_argument('--yaml-path', default='a.yaml', type=str, help='path of yaml (--use-yaml argument must be set to True)')
     parser.add_argument('--input-path', default=None, type=str, help='fits file locations only used when yaml is not used')
     parser.add_argument('--output-path', default=None, type=str, help='output file locations when yaml is not used')
     parser.add_argument('--start-date', default=None, type=str, help='start date of photos (ONLY FOR NJIT)')
     parser.add_argument('--end-date', default=None, type=str, help='end date of photos (ONLY FOR NJIT)')
     return parser
 
-def yaml_startup(yaml_filepath, input_file=None, output_file=None, start=None, end=None):
+def yaml_startup(yaml_filepath, input_file=None, output_file=None, start=None, end=None, ui=False):
     '''
     reads in yaml settings and calls main function with these settings
     
@@ -170,27 +177,30 @@ def yaml_startup(yaml_filepath, input_file=None, output_file=None, start=None, e
     yolo_dir = data['yolo_dir']
     save_images = data['save_images']
     middle_option = data['better_optimization']
-
-    if input_file == None and output_file == None:
-        directory = data['file_path_of_data']
-        output_file = data['output_folder_location']
-    else:
-        directory = input_file
-        output_file = output_file
     
-    if start != None and end != None:
-        custom_folder(directory, device, output_file, yolo_dir, middle_option, conf_threshold, overlap_threshold, save_images=save_images, start_time=start, end_time=end)
+    if ui: 
+        app = QApplication(sys.argv)
+        window = MainApp(device, yolo_dir)
+        window.show()
+        sys.exit(app.exec_())
     else:
-        multifile(directory, device, output_file, yolo_dir, middle_option, conf_threshold, overlap_threshold, save_images=save_images)
+        if input_file == None and output_file == None:
+            directory = data['file_path_of_data']
+            output_file = data['output_folder_location']
+        else:
+            directory = input_file
+            output_file = output_file
+        
+        if start != None and end != None:
+            custom_folder(directory, device, output_file, yolo_dir, middle_option, conf_threshold, overlap_threshold, save_images=save_images, start_time=start, end_time=end)
+        else:
+            multifile(directory, device, output_file, yolo_dir, middle_option, conf_threshold, overlap_threshold, save_images=save_images)
+
 
 args = args_parser().parse_args()
 
-
 if not args.cmd_mode: # Create the application and the main window
-    app = QApplication(sys.argv)
-    window = MainApp()
-    window.show()
-    sys.exit(app.exec_())
+    yaml_startup(args.yaml_path, ui=True)
 
 else: # Uses yaml file as input instead
     if args.input_path is not None and args.output_path is not None:
@@ -203,3 +213,4 @@ else: # Uses yaml file as input instead
             yaml_startup(args.yaml_path, start=args.start_date, end=args.end_date)
         else:
             yaml_startup(args.yaml_path)
+
